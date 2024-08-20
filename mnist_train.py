@@ -3,7 +3,7 @@ import mlx.nn as nn
 import mlx.optimizers as optim
 from mlx.data import datasets
 from mlx.nn.layers.activations import partial
-import tensorflow as tf
+import tensorboard as tb
 from functools import partial
 import datetime
 
@@ -55,7 +55,6 @@ mx.eval(model.parameters())
 optimizer = optim.Adam(learning_rate=0.00001)
 state = [model.state, optimizer.state]
 
-
 def train_step(model, X, y):
     output = model(X)
     loss = mx.mean(nn.losses.cross_entropy(output, y))
@@ -75,8 +74,8 @@ current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 train_log_dir = "logs/mlx_test/" + current_time + "/train"
 test_log_dir = "logs/mlx_test/" + current_time + "/test"
 
-train_summary_writer = tf.summary.create_file_writer(train_log_dir)
-test_summary_writer = tf.summary.create_file_writer(test_log_dir)
+train_summary_writer = tb.summary.Writer(train_log_dir)
+test_summary_writer = tb.summary.Writer(test_log_dir)
 
 epochs = 20
 for epoch in range(epochs):
@@ -92,9 +91,8 @@ for epoch in range(epochs):
     train_loss = mx.mean(mx.array(average_loss))
     train_acccuracy = mx.mean(mx.array(average_accuracy))
 
-    with train_summary_writer.as_default():
-        tf.summary.scalar("loss", train_loss.item(), step=epoch)
-        tf.summary.scalar("accuracy", train_acccuracy.item(), step=epoch)
+    train_summary_writer.add_scalar("loss", train_loss.item(), step=epoch)
+    train_summary_writer.add_scalar("accuracy", train_acccuracy.item(), step=epoch)
 
     print(
         f"Epoch {epoch}, Loss: {train_loss.item()}, Accuracy: {train_acccuracy.item()}"
@@ -114,9 +112,8 @@ for epoch in range(epochs):
     test_loss = mx.mean(mx.array(test_loss))
     test_accuracy = mx.mean(mx.array(test_accuracy))
 
-    with test_summary_writer.as_default():
-        tf.summary.scalar("loss", test_loss.item(), step=epoch)
-        tf.summary.scalar("accuracy", test_accuracy.item(), step=epoch)
+    test_summary_writer.add_scalar("loss", test_loss.item(), step=epoch)
+    test_summary_writer.add_scalar("accuracy", test_accuracy.item(), step=epoch)
 
     print(f"Test Loss: {test_loss.item()}, Test Accuracy: {test_accuracy.item()}")
 
